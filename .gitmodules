@@ -1,0 +1,9 @@
+[submodule "api-gateway-iman"]
+	path = gateway-iman
+	url = https://github.com/jakhongirA/gateway-iman.git
+[submodule "post-service"]
+	path = post-service
+	url = https://github.com/jakhongirA/post-service.git
+[submodule "post-loader-service"]
+	path = post-loader-service
+	url = https://github.com/jakhongirA/post-loader-service.git
