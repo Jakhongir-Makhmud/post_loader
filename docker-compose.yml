@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  postdb:
+    container_name: postdb
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1
+      POSTGRES_DB: postdb
+    ports:
+      - "5432:5432"
+
+  post_loader_service:
+    container_name: post_loader_service
+    build: ./post-loader-service
+    depends_on:
+      - "postdb"
+    ports:
+      - "9001:9001"
+  post_service:
+    container_name: post_service
+    build: ./post-service
+    depends_on:
+      - "postdb"
+    ports:
+      - "9002:9002"
+  api-gateway:
+    container_name: api_gateway
+    build: ./gateway-iman
+    depends_on:
+      - "post_loader_service"
+      - "post_service"
+    ports:
+      - "9003:9003"
+volumes:
+  dbdata: # create the volume for persisting data.
