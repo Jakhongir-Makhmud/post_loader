@@ -1,22 +1,22 @@
 version: "3.8"
 
 services:
-  # postdb:
-  #   container_name: postdb
-  #   image: postgres:14.4
-  #   healthcheck:
-  #     test: [ "CMD", "pg_isready", "-q", "-d", "postdb", "-U", "jakhongir" ]
-  #     timeout: 45s
-  #     interval: 10s
-  #     retries: 10
-  #   environment:
-  #     POSTGRES_USER: jakhongir
-  #     POSTGRES_PASSWORD: 1
-  #     POSTGRES_DB: postdb
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - ./post-loader-service/dbScheme/postdb.sql:/docker-entrypoint-initdb.d/create_tables.sql
+  postdb:
+    container_name: postdb
+    image: postgres:14.4
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postdb", "-U", "jakhongir" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    environment:
+      POSTGRES_USER: jakhongir
+      POSTGRES_PASSWORD: 1
+      POSTGRES_DB: postdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./post-loader-service/dbScheme/postdb.sql:/docker-entrypoint-initdb.d/create_tables.sql
 
   post_loader_service:
     container_name: post_loader_service
@@ -27,6 +27,11 @@ services:
       APP_DATABASE_PASSWORD: 1
       APP_DATABASE_DBNAME: postdb
       APP_PORT: :9001
+    depends_on:
+      postdb:
+        condition: service_healthy
+    links:
+      - postdb
     ports:
       - "9001:9001"
   post_service:
@@ -37,13 +42,18 @@ services:
       APP_DATABASE_USERNAME: jakhongir
       APP_DATABASE_PASSWORD: 1
       APP_DATABASE_DBNAME: postdb
+    depends_on:
+      postdb:
+        condition: service_healthy
+    links:
+      - postdb
     ports:
       - "9002:9002"
   api-gateway:
     container_name: api_gateway
     build: ./gateway-iman
     environment:
-      APP_PORT: :9003
+      APP_PORT: :8085
       APP_LOG_LEVEL: production
       APP_SERVICES_POST_SERVICE_PORT: :9002
       APP_SERVICES_POST_LOADER_SERVICE_PORT: :9001
@@ -51,4 +61,4 @@ services:
       - post_loader_service
       - post_service
     ports:
-      - "9003:9003"
+      - "9003:8085"
