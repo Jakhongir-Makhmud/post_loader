@@ -1,37 +1,54 @@
 version: "3.8"
 
 services:
-  postdb:
-    container_name: postdb
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1
-      POSTGRES_DB: postdb
-    ports:
-      - "5432:5432"
+  # postdb:
+  #   container_name: postdb
+  #   image: postgres:14.4
+  #   healthcheck:
+  #     test: [ "CMD", "pg_isready", "-q", "-d", "postdb", "-U", "jakhongir" ]
+  #     timeout: 45s
+  #     interval: 10s
+  #     retries: 10
+  #   environment:
+  #     POSTGRES_USER: jakhongir
+  #     POSTGRES_PASSWORD: 1
+  #     POSTGRES_DB: postdb
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ./post-loader-service/dbScheme/postdb.sql:/docker-entrypoint-initdb.d/create_tables.sql
 
   post_loader_service:
     container_name: post_loader_service
     build: ./post-loader-service
-    depends_on:
-      - "postdb"
+    environment:
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_USERNAME: jakhongir
+      APP_DATABASE_PASSWORD: 1
+      APP_DATABASE_DBNAME: postdb
+      APP_PORT: :9001
     ports:
       - "9001:9001"
   post_service:
     container_name: post_service
     build: ./post-service
-    depends_on:
-      - "postdb"
+    environment:
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_USERNAME: jakhongir
+      APP_DATABASE_PASSWORD: 1
+      APP_DATABASE_DBNAME: postdb
     ports:
       - "9002:9002"
   api-gateway:
     container_name: api_gateway
     build: ./gateway-iman
+    environment:
+      APP_PORT: :9003
+      APP_LOG_LEVEL: production
+      APP_SERVICES_POST_SERVICE_PORT: :9002
+      APP_SERVICES_POST_LOADER_SERVICE_PORT: :9001
     depends_on:
-      - "post_loader_service"
-      - "post_service"
+      - post_loader_service
+      - post_service
     ports:
       - "9003:9003"
-volumes:
-  dbdata: # create the volume for persisting data.
